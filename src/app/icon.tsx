@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og";
 import { portfolio } from "@/config/portfolio";
 import { initials } from "@/lib/derive";
 
+export const dynamic = "force-static";
 export const size = { width: 64, height: 64 };
 export const contentType = "image/png";
 
