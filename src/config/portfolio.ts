@@ -8,7 +8,7 @@ import type { Portfolio } from "@/types/portfolio";
  */
 export const portfolio: Portfolio = {
   site: {
-    url: "https://gajendra-singh.dev",
+    url: "https://symphonious-platypus-80a14c.netlify.app",
     title: "Gajendra Singh — Full Stack Software Engineer | NestJS, React.js, PostgreSQL",
     description:
       "Portfolio of Gajendra Singh, a Full Stack Software Engineer with 3+ years of experience across 12+ projects, building SaaS and enterprise platforms with NestJS, React.js, Next.js, TypeScript, PostgreSQL, microservices, gRPC, and AWS.",
