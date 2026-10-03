@@ -1,0 +1,98 @@
+/* Behaviours built from several rules: card hover, scroll reveal, the case-study panel. */
+
+@layer components {
+  /* Hover for any card: a deeper shadow (and a stronger border in dark mode). */
+  .card-hover {
+    transition:
+      box-shadow 300ms var(--ease-smooth),
+      border-color 300ms,
+      color 300ms,
+      translate 500ms var(--ease-smooth);
+  }
+
+  /* Hidden until it scrolls into view (see reveal-on-scroll.tsx). Declared after
+     .card-hover so an element with both keeps every transition; only the fade waits for `--d`. */
+  .reveal {
+    opacity: 0;
+    transform: translateY(18px);
+    transition:
+      opacity 0.8s var(--ease-smooth) var(--d, 0s),
+      transform 0.8s var(--ease-smooth) var(--d, 0s),
+      box-shadow 300ms var(--ease-smooth),
+      border-color 300ms,
+      color 300ms,
+      translate 500ms var(--ease-smooth);
+  }
+
+  .reveal[data-in] {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (hover: hover) {
+    /* `card` reads these two variables, so swapping them is all a hover has to do. */
+    .card-hover:hover {
+      --card-border: var(--card-border-hover);
+      --card-shadow: var(--card-shadow-hover);
+    }
+  }
+
+  /* The case-study panel: a native dialog that slides in from the right. */
+  .drawer {
+    position: fixed;
+    inset: 0 0 0 auto;
+    margin: 0;
+    width: 100%;
+    max-width: 42rem;
+    height: 100dvh;
+    max-height: none;
+    border: 0;
+    border-left: 1px solid var(--line);
+    padding: 0;
+    background: var(--bg);
+    color: var(--body);
+    translate: 100% 0;
+    transition:
+      translate 500ms var(--ease-smooth),
+      overlay 500ms allow-discrete,
+      display 500ms allow-discrete;
+  }
+
+  .drawer[open] {
+    translate: 0 0;
+
+    @starting-style {
+      translate: 100% 0;
+    }
+  }
+
+  .drawer::backdrop {
+    background-color: rgb(0 0 0 / 0);
+    transition:
+      background-color 500ms,
+      overlay 500ms allow-discrete,
+      display 500ms allow-discrete;
+  }
+
+  .drawer[open]::backdrop {
+    background-color: rgb(0 0 0 / 0.7);
+
+    @starting-style {
+      background-color: rgb(0 0 0 / 0);
+    }
+  }
+
+  /* A self-playing block rests while it is off screen (see reveal-on-scroll.tsx). */
+  .autoplay:not([data-live]) * {
+    animation-play-state: paused !important;
+  }
+
+  /* Reading progress under the header, where the browser can tie an animation to scroll. */
+  @supports (animation-timeline: scroll()) {
+    .scroll-progress {
+      transform-origin: left;
+      animation: grow-x linear both;
+      animation-timeline: scroll(root);
+    }
+  }
+}

@@ -1,0 +1,143 @@
+/* Motion: keyframes, the entrance and timer utilities, and the reduced-motion switch. */
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Moves the dashes along a diagram line; -8 is one dash plus one gap. */
+@keyframes flow {
+  to {
+    stroke-dashoffset: -8;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes mark-draw {
+  to {
+    background-size: 100% 100%;
+  }
+}
+
+/* The element is as tall as its rail, so 100% of itself is the full drop. */
+@keyframes rail-drop {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  10%,
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes float {
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+/* The arc between two steps of the principles loop; the circle's pathLength is the step count. */
+@keyframes wheel-arc {
+  from {
+    stroke-dasharray: 0 99;
+  }
+  to {
+    stroke-dasharray: 1 99;
+  }
+}
+
+/* The lit head of that arc: `--turn` is the angle between two steps. */
+@keyframes wheel-head {
+  to {
+    transform: rotate(var(--turn));
+  }
+}
+
+/* Changes nothing: it only gives `clock` an end to report. */
+@keyframes clock {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Plays once on load; stagger with `--d`. */
+@utility anim-in {
+  animation: fade-up 0.8s var(--ease-smooth) both;
+  animation-delay: var(--d, 0s);
+}
+
+/* A bar that grows from its left edge. */
+@utility grow-x {
+  transform-origin: left;
+  animation: grow-x 0.7s var(--ease-smooth) both;
+  animation-delay: var(--d, 0s);
+}
+
+/* A highlighter stroke drawn left to right behind a phrase. */
+@utility mark-draw {
+  background-repeat: no-repeat;
+  background-size: 0% 100%;
+  animation: mark-draw 0.9s cubic-bezier(0.5, 0, 0.2, 1) forwards;
+  animation-delay: var(--d, 0s);
+}
+
+/* An invisible timer: `onAnimationEnd` fires after `animation-duration`. It
+   waits while its `group` is hovered or focused, and never fires for visitors
+   who asked for reduced motion, so nothing moves on its own for them. */
+@utility clock {
+  position: absolute;
+  width: 0;
+  height: 0;
+  animation: clock linear both;
+
+  :where(.group):hover &,
+  :where(.group):focus-within & {
+    animation-play-state: paused;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+
+  .mark-draw {
+    background-size: 100% 100%;
+  }
+}

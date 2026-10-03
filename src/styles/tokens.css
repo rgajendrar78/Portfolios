@@ -1,0 +1,54 @@
+/* Design tokens: colours, type sizes and animations, plus the values that change per theme. */
+
+/* Theme is a data attribute set before paint (see layout.tsx). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Colours come from src/config/portfolio.ts → CSS variables in layout.tsx. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-raised: var(--raised);
+  --color-tint: var(--tint);
+  --color-ink: var(--ink);
+  --color-body: var(--body);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-ok: var(--ok);
+  --color-sky: var(--sky);
+  --color-violet: var(--violet);
+
+  --font-sans: var(--font-roboto), system-ui, sans-serif;
+
+  /* Small sizes between Tailwind's steps: 10px, 11px and 13px at a 16px root. */
+  --text-3xs: 0.625rem;
+  --text-2xs: 0.6875rem;
+  --text-md: 0.8125rem;
+
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-flow: flow 0.9s linear infinite;
+  --animate-rail: rail-drop 2.8s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  --animate-orbit: orbit 40s linear infinite;
+  --animate-float: float 5s ease-in-out infinite;
+}
+
+/* Values that change with the theme, read by the `card` surface and by shadows. */
+@layer base {
+  :root {
+    --ease-smooth: cubic-bezier(0.2, 0.7, 0.2, 1);
+    --shadow: rgb(40 30 20 / 0.22);
+    --card-border: transparent;
+    --card-border-hover: transparent;
+    --card-shadow: 0 1px 2px rgb(40 30 20 / 0.05), 0 6px 16px -6px rgb(40 30 20 / 0.12);
+    --card-shadow-hover: 0 2px 4px rgb(40 30 20 / 0.06), 0 16px 32px -12px rgb(40 30 20 / 0.22);
+  }
+
+  [data-theme="dark"] {
+    --shadow: rgb(0 0 0 / 0.6);
+    --card-border: var(--line);
+    --card-border-hover: var(--line-strong);
+    --card-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 6px 16px -6px rgb(0 0 0 / 0.5);
+    --card-shadow-hover: 0 2px 4px rgb(0 0 0 / 0.35), 0 16px 32px -12px rgb(0 0 0 / 0.7);
+  }
+}

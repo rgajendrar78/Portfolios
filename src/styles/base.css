@@ -1,0 +1,63 @@
+/* Element defaults. */
+
+@layer base {
+  html {
+    /* Everything is sized in rem: 16px up to a 1440px screen, then the whole
+       page grows with the screen (20px at 2560px, capped at 22px). */
+    font-size: clamp(1rem, 0.357vw + 0.679rem, 1.375rem);
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+    interpolate-size: allow-keywords;
+  }
+
+  /* The page behind an open case study stays where it is. */
+  html:has(dialog[open]) {
+    overflow: hidden;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--body);
+    font-family: var(--font-sans);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    transition:
+      background-color 300ms,
+      color 300ms;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  /* Accordions open and close smoothly where the browser can animate to `auto`. */
+  details::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition:
+      block-size 400ms var(--ease-smooth),
+      content-visibility 400ms allow-discrete;
+  }
+
+  details[open]::details-content {
+    block-size: auto;
+  }
+
+  summary {
+    list-style: none;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: var(--bg);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+}

@@ -1,0 +1,79 @@
+/* Layout and surface utilities shared by every section. */
+
+@utility shell {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 70rem;
+  padding-inline: 1.25rem;
+
+  @media (width >= 40rem) {
+    padding-inline: 2rem;
+  }
+}
+
+/* The one card surface: a shadow in light mode, a hairline border in dark mode. */
+@utility card {
+  border: 1px solid var(--card-border);
+  background: var(--raised);
+  box-shadow: var(--card-shadow);
+}
+
+@utility label {
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* The smaller label inside cards. */
+@utility label-sm {
+  font-size: 0.625rem;
+  line-height: 1.5;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+@utility heading {
+  font-size: 2.25rem;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+
+  @media (width >= 40rem) {
+    font-size: 3rem;
+  }
+}
+
+@utility link {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 4px;
+  transition:
+    color 200ms,
+    text-decoration-color 200ms;
+
+  &:hover {
+    color: var(--accent);
+    text-decoration-color: var(--accent);
+  }
+}
+
+/* The striped band between sections. */
+@utility hatch {
+  border-block: 1px solid var(--line);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0 7px,
+    color-mix(in oklab, var(--line) 70%, transparent) 7px 8px
+  );
+}
+
+/* The dotted panel behind small diagrams. */
+@utility dots {
+  background-color: var(--bg);
+  background-image: radial-gradient(circle at 1px 1px, var(--line) 1px, transparent 0);
+  background-size: 1rem 1rem;
+}
