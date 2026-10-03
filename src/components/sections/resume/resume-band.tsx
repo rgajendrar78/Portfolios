@@ -86,7 +86,13 @@ export function ResumeBand() {
           <a href={person.resumeUrl} target="_blank" rel="noreferrer" className={CTA}>
             View resume ↗
           </a>
-          <a href={person.resumeUrl} download className="link">
+          <a
+            href={person.resumeUrl}
+            target={person.resumeUrl.startsWith("http") ? "_blank" : undefined}
+            rel={person.resumeUrl.startsWith("http") ? "noreferrer" : undefined}
+            download={person.resumeUrl.startsWith("http") ? undefined : true}
+            className="link"
+          >
             Download PDF
           </a>
         </div>

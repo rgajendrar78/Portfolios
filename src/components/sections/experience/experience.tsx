@@ -3,7 +3,7 @@ import { stagger } from "@/lib/motion";
 import { ExperienceRoles } from "./experience-roles";
 
 export function Experience({ years }: { years: string }) {
-  const stats = [{ value: years, label: `years at ${portfolio.person.company}` }, ...portfolio.experience.stats];
+  const stats = [{ value: years, label: "years of experience" }, ...portfolio.experience.stats];
 
   return (
     <>
