@@ -10,6 +10,8 @@ export const contentType = "image/png";
 
 // The link preview recruiters see when the site is shared.
 export default function OpengraphImage() {
+  const activePalette = theme[theme.defaultMode === "system" ? "dark" : theme.defaultMode];
+
   return new ImageResponse(
     (
       <div
@@ -20,8 +22,8 @@ export default function OpengraphImage() {
           flexDirection: "column",
           justifyContent: "space-between",
           padding: 72,
-          background: theme.light.bg,
-          color: theme.light.ink,
+          background: activePalette.bg,
+          color: activePalette.ink,
         }}
       >
         <div style={{ fontSize: 34, opacity: 0.85 }}>{person.role}</div>
