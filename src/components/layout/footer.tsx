@@ -9,7 +9,7 @@ export function Footer({ year }: { year: number }) {
       <div className="shell flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <p>
           <span className="text-lg text-ink">{person.name}</span>
-          <span className="ml-3 text-xs text-faint">© {year} · designed and built with Next.js &amp; Tailwind</span>
+          <span className="ml-3 text-xs text-faint">© {year} · Created by {person.name}</span>
         </p>
         <nav aria-label="Footer" className="flex flex-wrap items-center gap-x-5 gap-y-2">
           {links.map((item) => (

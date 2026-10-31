@@ -35,10 +35,10 @@ export const portfolio: Portfolio = {
 
   person: {
     name: "Gajendra Singh",
-    tagline: "Software Engineer, Ahmedabad",
+    tagline: "Software Engineer, Indore",
     role: "Full Stack Software Engineer",
     company: "Devstree",
-    location: "Ahmedabad, Gujarat, India",
+    location: "Indore, Madhya Pradesh, India",
     timeZone: "UTC+5:30 (IST)",
     email: "rgajendrar@gmail.com",
     resumeUrl: "https://drive.google.com/file/d/1GO6pGtOOmQffzyfcIFmWD5Jfic2o2E9x/view?usp=sharing",
