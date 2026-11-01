@@ -131,7 +131,7 @@ export function Hero({ years }: { years: string }) {
 
           <aside className="anim-in lg:col-span-4 lg:self-end" style={{ "--d": "500ms" }}>
             <div className="group card card-hover rounded-xl bg-raised/90 p-5 backdrop-blur-sm">
-              <div className="flex items-end justify-between gap-3 border-b border-line pb-4">
+              <div className="flex items-center justify-between gap-3 border-b border-line pb-4">
                 <span className="grid size-12 shrink-0 place-items-center self-center rounded-xl border border-line-strong bg-bg">
                   <Icon
                     name="user"
@@ -148,29 +148,29 @@ export function Hero({ years }: { years: string }) {
                 </p>
               </div>
 
-              <ol className="relative mt-4 space-y-2 pl-5 before:absolute before:top-1.5 before:bottom-1.5 before:left-[3px] before:w-px before:bg-line-strong">
+              <ol className="relative mt-4 space-y-3 pl-5 before:absolute before:top-2 before:bottom-2 before:left-[3px] before:w-px before:bg-line-strong">
                 {timeline.map((role, index) => {
                   const current = index === timeline.length - 1;
                   return (
                     <li
                       key={`${role.title}-${role.period}`}
-                      className="anim-in relative flex items-center justify-between gap-3"
+                      className="anim-in relative flex min-w-0 items-start gap-2"
                       style={{ "--d": `${600 + index * 110}ms` }}
                     >
                       <span
                         aria-hidden
-                        className={`absolute top-1/2 -left-5 size-[7px] -translate-y-1/2 rounded-full border ${
+                        className={`absolute top-2 -left-5 size-[7px] rounded-full border ${
                           current ? "border-ok bg-ok ring-4 ring-ok/20" : "border-line-strong bg-bg"
                         }`}
                       />
-                      <span className="inline-flex min-w-0 items-center gap-2 text-[0.84375rem] text-body">
-                        <Icon name={role.icon} className="size-5" />
-                        <span className="truncate">{role.title}</span>
-                      </span>
-                      <span
-                        className={`shrink-0 text-[0.65625rem] tabular-nums ${current ? "text-ok" : "text-faint"}`}
-                      >
-                        {role.period}
+                      <Icon name={role.icon} className="size-5 shrink-0 text-muted" />
+                      <span className="min-w-0">
+                        <span className="block text-[0.84375rem] leading-snug text-body">{role.title}</span>
+                        <span
+                          className={`mt-0.5 block text-[0.65625rem] tabular-nums ${current ? "text-ok" : "text-faint"}`}
+                        >
+                          {role.period}
+                        </span>
                       </span>
                     </li>
                   );
