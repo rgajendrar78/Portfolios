@@ -100,11 +100,11 @@ export function Principles() {
           )}
         </svg>
 
-        <div className="absolute top-1/2 left-1/2 w-[calc(var(--r)*1.12)] -translate-1/2 text-center max-sm:hidden">
+        <div className="absolute top-1/2 left-1/2 flex h-[calc(var(--r)*1.38)] w-[calc(var(--r)*1.12)] -translate-1/2 items-center justify-center text-center max-sm:hidden">
           <div key={active} className="anim-in">
-            <Icon name={current.icon} className="mx-auto size-14 lg:size-16" />
-            <h3 className="mt-2 text-2xl leading-tight text-ink lg:text-[1.75rem]">{current.title}</h3>
-            <p className="mt-2 text-[0.78125rem] leading-relaxed text-body max-lg:hidden">{current.detail}</p>
+            <Icon name={current.icon} className="mx-auto size-12 lg:size-14" />
+            <h3 className="mt-1.5 text-xl leading-[1.08] text-ink sm:text-[1.375rem] lg:text-[1.5rem]">{current.title}</h3>
+            <p className="mx-auto mt-2 max-w-[17.5rem] text-[0.6875rem] leading-[1.45] text-body max-lg:hidden">{current.detail}</p>
           </div>
         </div>
 

@@ -86,7 +86,7 @@ export function Hero({ years }: { years: string }) {
                 return (
                   <span key={part}>
                     <Phrase options={part.split("|")} tone={tone} order={order} />
-                    <sup className={`ml-0.5 text-2xs font-medium tabular-nums ${TONE_TEXT[tone]}`}>{order + 1}</sup>
+                    <sup className={`text-2xs font-medium tabular-nums ${TONE_TEXT[tone]}`}>{order + 1}</sup>
                   </span>
                 );
               })}
@@ -129,7 +129,7 @@ export function Hero({ years }: { years: string }) {
             </div>
           </div>
 
-          <aside className="anim-in lg:col-span-4 lg:self-end" style={{ "--d": "500ms" }}>
+          <aside className="anim-in lg:col-span-4 lg:self-center" style={{ "--d": "500ms" }}>
             <div className="group card card-hover rounded-xl bg-raised/90 p-5 backdrop-blur-sm">
               <div className="flex items-center justify-between gap-3 border-b border-line pb-4">
                 <span className="grid size-12 shrink-0 place-items-center self-center rounded-xl border border-line-strong bg-bg">

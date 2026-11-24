@@ -5,6 +5,7 @@
 
 /* Colours come from src/config/portfolio.ts → CSS variables in layout.tsx. */
 @theme inline {
+  --default-transition-timing-function: var(--ease-smooth);
   --color-bg: var(--bg);
   --color-raised: var(--raised);
   --color-tint: var(--tint);
@@ -26,7 +27,7 @@
   --text-2xs: 0.6875rem;
   --text-md: 0.8125rem;
 
-  --animate-marquee: marquee 40s linear infinite;
+  --animate-marquee: marquee 64s linear infinite;
   --animate-flow: flow 0.9s linear infinite;
   --animate-rail: rail-drop 2.8s cubic-bezier(0.45, 0, 0.55, 1) infinite;
   --animate-orbit: orbit 40s linear infinite;
@@ -36,7 +37,7 @@
 /* Values that change with the theme, read by the `card` surface and by shadows. */
 @layer base {
   :root {
-    --ease-smooth: cubic-bezier(0.2, 0.7, 0.2, 1);
+    --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
     --shadow: rgb(40 30 20 / 0.22);
     --card-border: transparent;
     --card-border-hover: transparent;

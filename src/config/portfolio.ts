@@ -90,7 +90,7 @@ export const portfolio: Portfolio = {
 
   hero: {
     intro:
-      "I build *distributed backends|real-time dashboards|gRPC microservices*, *payment flows|audited ledgers|order pipelines* that don't double-charge, and *AI features|AI assistants|agent prompt pipelines* that don't make things up.",
+      "I build *distributed backends|real-time dashboards|gRPC microservices*, design *payment flows|audited ledgers|order pipelines* for reliable transactions, and ship *AI features|AI products|AI copilots* with grounded outputs.",
     footnotes: [
       { text: "NestJS · gRPC · Docker · Redis", icon: "boxes", tone: "accent" },
       { text: "3 payment gateways · ACID ledger", icon: "receipt", tone: "ok" },
@@ -443,7 +443,7 @@ export const portfolio: Portfolio = {
         },
       },
       {
-        name: "Family",
+        name: "Famlee",
         subtitle: "Social Media Platform",
         category: "Full Stack",
         tone: "ok",

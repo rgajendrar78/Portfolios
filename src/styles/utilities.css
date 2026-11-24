@@ -38,11 +38,13 @@
 @utility heading {
   font-size: 2.25rem;
   line-height: 1.05;
-  letter-spacing: -0.01em;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
   color: var(--ink);
 
   @media (width >= 40rem) {
-    font-size: 3rem;
+    font-size: clamp(3rem, 3.3vw + 1.7rem, 3.5rem);
   }
 }
 
@@ -52,8 +54,8 @@
   text-decoration-color: var(--line-strong);
   text-underline-offset: 4px;
   transition:
-    color 200ms,
-    text-decoration-color 200ms;
+    color 250ms var(--ease-smooth),
+    text-decoration-color 250ms var(--ease-smooth);
 
   &:hover {
     color: var(--accent);

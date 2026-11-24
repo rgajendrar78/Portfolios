@@ -4,24 +4,24 @@
   /* Hover for any card: a deeper shadow (and a stronger border in dark mode). */
   .card-hover {
     transition:
-      box-shadow 300ms var(--ease-smooth),
-      border-color 300ms,
-      color 300ms,
-      translate 500ms var(--ease-smooth);
+      box-shadow 400ms var(--ease-smooth),
+      border-color 350ms var(--ease-smooth),
+      color 250ms var(--ease-smooth),
+      translate 550ms var(--ease-smooth);
   }
 
   /* Hidden until it scrolls into view (see reveal-on-scroll.tsx). Declared after
      .card-hover so an element with both keeps every transition; only the fade waits for `--d`. */
   .reveal {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(22px) scale(0.98);
     transition:
-      opacity 0.8s var(--ease-smooth) var(--d, 0s),
-      transform 0.8s var(--ease-smooth) var(--d, 0s),
-      box-shadow 300ms var(--ease-smooth),
-      border-color 300ms,
-      color 300ms,
-      translate 500ms var(--ease-smooth);
+      opacity 0.9s var(--ease-smooth) var(--d, 0s),
+      transform 0.9s var(--ease-smooth) var(--d, 0s),
+      box-shadow 400ms var(--ease-smooth),
+      border-color 350ms var(--ease-smooth),
+      color 250ms var(--ease-smooth),
+      translate 550ms var(--ease-smooth);
   }
 
   .reveal[data-in] {
@@ -34,6 +34,7 @@
     .card-hover:hover {
       --card-border: var(--card-border-hover);
       --card-shadow: var(--card-shadow-hover);
+      translate: 0 -4px;
     }
   }
 

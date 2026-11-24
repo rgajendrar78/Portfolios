@@ -61,7 +61,7 @@ function ProjectCard({
   return (
     <article
       className={`reveal group card card-hover relative flex min-w-0 flex-col rounded-lg p-5 sm:p-7 ${wide ? "md:col-span-2" : ""}`}
-      style={{ "--d": `${(index % 2) * 90}ms` }}
+      style={{ "--d": `${Math.min(index, 4) * 80}ms` }}
     >
       <div className="flex items-center justify-between gap-4">
         <p className="flex items-center gap-3 text-xs text-muted">
@@ -281,17 +281,17 @@ export function Work() {
 
   return (
     <>
-      <div className="reveal flex flex-col gap-5 border-b border-line pb-5 lg:flex-row lg:items-end lg:justify-between">
+      <div className="reveal flex flex-col gap-5 border-b border-line pb-5 lg:flex-row lg:items-center lg:gap-4">
         {/* One scrolling row on phones, wrapping from tablets up. */}
-        <div className="-mx-5 overflow-x-auto px-5 [scrollbar-width:none] sm:mx-0 sm:px-0">
-          <div className="flex gap-2 text-sm whitespace-nowrap sm:flex-wrap">
+        <div className="-mx-5 -my-1 overflow-x-auto px-5 py-1 [scrollbar-width:none] sm:mx-0 sm:px-0 lg:min-w-0 lg:flex-1">
+          <div className="flex gap-2 text-sm whitespace-nowrap sm:flex-wrap lg:flex-nowrap">
             {chips.map(([name, count]) => (
               <button
                 key={name}
                 type="button"
                 aria-pressed={tag === name}
                 onClick={() => setTag(name)}
-                className={`group inline-flex items-center gap-1.5 rounded-full border py-1 pr-3 pl-1 transition-all duration-300 ${
+                className={`group inline-flex items-center gap-1.5 rounded-full border py-1 pr-3 pl-1 transition-all duration-300 ease-[cubic-bezier(0.2,0.7,0.2,1)] hover:-translate-y-0.5 active:scale-95 ${
                   tag === name
                     ? "border-accent/60 bg-tint text-ink shadow-[0_6px_20px_-12px_var(--accent)]"
                     : "border-line bg-raised/60 text-muted hover:border-line-strong hover:text-ink"
@@ -300,7 +300,9 @@ export function Work() {
                 <span className="grid size-6 place-items-center rounded-full bg-bg">
                   <Icon
                     name={filters[name]?.icon ?? "layers"}
-                    className="size-5 transition-transform duration-300 group-hover:-translate-y-px"
+                    className={`size-5 transition-transform duration-300 ${
+                      tag === name ? "rotate-6 scale-110" : "group-hover:-translate-y-0.5 group-hover:rotate-[-8deg]"
+                    }`}
                   />
                 </span>
                 {name}
@@ -311,13 +313,17 @@ export function Work() {
             ))}
           </div>
         </div>
-        <label className="flex shrink-0 items-center gap-3 border-b border-line-strong pb-1.5 transition-colors duration-300 focus-within:border-accent lg:w-72">
-          <span className="text-xs text-faint">find</span>
+        <label className="group/search flex shrink-0 items-center gap-2 border-b border-line-strong pb-1.5 transition-[border-color,transform] duration-300 focus-within:-translate-y-px focus-within:border-accent lg:w-40">
+          <Icon
+            name="search"
+            className="size-4 shrink-0 text-faint transition-transform duration-300 group-focus-within/search:scale-110"
+          />
           <input
             type="search"
+            aria-label="Search projects"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="gRPC, Next.js, Redis…"
+            placeholder="Search skills…"
             className="w-full bg-transparent text-sm text-ink outline-none placeholder:text-faint"
           />
         </label>
@@ -348,16 +354,17 @@ export function Work() {
         <div className="reveal mt-16 grid gap-y-6 lg:grid-cols-12 lg:gap-x-8">
           <h3 className="label lg:col-span-3 lg:pt-5">Also built</h3>
           <ul className="border-t border-line lg:col-span-9">
-            {alsoBuilt.map((item) => (
+            {alsoBuilt.map((item, index) => (
               <li
                 key={item.name}
-                className="group grid grid-cols-[1fr_auto] items-baseline gap-x-6 gap-y-1 border-b border-line py-5 transition-colors duration-300 hover:border-line-strong sm:grid-cols-[10rem_1fr_auto]"
+                className="reveal group grid min-h-20 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b border-line py-4 transition-colors duration-300 hover:border-line-strong sm:grid-cols-[15rem_minmax(0,1fr)_auto] sm:gap-x-6"
+                style={{ "--d": `${index * 80}ms` }}
               >
-                <span className="text-2xl text-ink transition-colors duration-300 group-hover:text-accent">
+                <span className="min-w-0 text-lg leading-tight text-ink transition-colors duration-300 group-hover:text-accent sm:whitespace-nowrap sm:text-xl">
                   {item.name}
                 </span>
                 <span className="text-sm text-muted max-sm:order-3 max-sm:col-span-2">{item.subtitle}</span>
-                <span className="text-xs text-faint tabular-nums">{item.period}</span>
+                <span className="text-2xs text-faint tabular-nums">{item.period}</span>
               </li>
             ))}
           </ul>

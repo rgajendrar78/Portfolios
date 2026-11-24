@@ -41,35 +41,31 @@ export function Spotlight() {
   );
 }
 
-const ROTATE_MS = 3600;
+const ROTATE_MS = 3200;
 
-/** A highlighted phrase; with several options it swaps between them, resizing to fit. */
+/** A highlighted phrase; reserving the widest option keeps sentence wrapping steady. */
 export function Phrase({ options, tone, order }: { options: string[]; tone: Tone; order: number }) {
   const [current, setCurrent] = useState(0);
-  const box = useRef<HTMLSpanElement>(null);
-
-  useEffect(() => {
-    const node = box.current;
-    const sized = node?.querySelector<HTMLElement>("[data-current]");
-    if (node && sized) node.style.width = `${sized.offsetWidth}px`;
-  }, [current]);
 
   return (
-    <span className="group whitespace-nowrap">
+    <span className="whitespace-nowrap">
       <span className="sr-only">{options[0]}</span>
       <span
-        ref={box}
         aria-hidden
-        className="relative inline-block h-[1.25em] overflow-hidden align-[-0.3em] transition-[width] duration-500 ease-[cubic-bezier(0.2,0.7,0.2,1)] [clip-path:inset(-2px_-4px)]"
+        className="relative inline-block h-[1.25em] overflow-hidden align-[-0.3em] [clip-path:inset(-2px_-4px)]"
       >
-        {/* In the flow but unseen: it gives the box its width before any script runs. */}
-        <span className="invisible px-0.5">{options[current]}</span>
+        <span className="invisible inline-grid h-[1.25em] whitespace-nowrap">
+          {options.map((option) => (
+            <span key={option} className="col-start-1 row-start-1 px-0.5 leading-[1.25em]">
+              {option}
+            </span>
+          ))}
+        </span>
         {options.map((option, index) => (
           <span
             key={option}
-            data-current={index === current ? "" : undefined}
-            className={`mark-draw absolute top-0 left-0 px-0.5 leading-[1.25em] whitespace-nowrap text-ink transition-all duration-500 ease-[cubic-bezier(0.2,0.7,0.2,1)] group-hover:brightness-125 ${
-              index === current ? "opacity-100" : "translate-y-[70%] opacity-0 blur-[3px]"
+            className={`mark-draw absolute top-0 left-0 px-0.5 leading-[1.25em] whitespace-nowrap text-ink transition-all duration-700 ease-[cubic-bezier(0.2,0.7,0.2,1)] hover:brightness-125 ${
+              index === current ? "opacity-100" : "translate-y-full opacity-0 blur-[3px]"
             }`}
             style={{
               backgroundImage: `linear-gradient(transparent 58%, color-mix(in oklab, ${toneColor(tone)} 30%, transparent) 58%)`,
@@ -83,7 +79,7 @@ export function Phrase({ options, tone, order }: { options: string[]; tone: Tone
           <span
             key={current}
             className="clock"
-            style={{ animationDuration: `${ROTATE_MS}ms`, animationDelay: `${order * 1200}ms` }}
+            style={{ animationDuration: `${ROTATE_MS}ms`, animationDelay: `${order * 900}ms` }}
             onAnimationEnd={() => setCurrent((index) => (index + 1) % options.length)}
           />
         )}

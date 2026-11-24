@@ -55,7 +55,7 @@ export function Section({
             <h2 className="heading">
               <Emphasis text={copy.title} className={emphasisClassName} />
             </h2>
-            <p className="mt-5 max-w-2xl text-[0.9375rem] leading-relaxed text-body sm:text-base">{copy.intro}</p>
+            <p className="mt-5 max-w-2xl text-base leading-relaxed text-body sm:text-lg">{copy.intro}</p>
           </div>
         </header>
         <div className="mt-10 sm:mt-12">{children}</div>

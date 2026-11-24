@@ -14,7 +14,7 @@ export function ResumeBand() {
         aria-hidden
         className="pointer-events-none absolute top-1/2 left-[18%] size-72 -translate-1/2 rounded-full bg-accent/10 blur-3xl"
       />
-      <div className="reveal shell relative grid items-center gap-y-10 md:grid-cols-12 md:gap-x-8">
+      <div className="reveal shell relative grid items-center gap-y-10 md:items-start md:grid-cols-12 md:gap-x-8">
         <div className="md:col-span-4">
           {/* A sheet of paper standing in for the PDF; it straightens and lifts under the pointer. */}
           <a
@@ -82,7 +82,7 @@ export function ResumeBand() {
           </ul>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm md:col-span-3 md:flex-col md:items-start">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm md:col-span-3 md:flex-col md:items-start md:pt-8">
           <a href={person.resumeUrl} target="_blank" rel="noreferrer" className={CTA}>
             View resume ↗
           </a>
