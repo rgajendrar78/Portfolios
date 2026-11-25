@@ -625,10 +625,10 @@ export function AssistantWidget() {
 
   const avatarStageClass =
     phase === "entering"
-      ? "right-5 bottom-16 size-36 scale-75 translate-y-6 opacity-0 sm:right-10 sm:bottom-20 sm:size-44 xl:right-[max(2.5rem,calc((100vw-70rem)/4-5.5rem))]"
+      ? "right-5 bottom-20 size-36 scale-75 translate-y-6 opacity-0 sm:right-10 sm:bottom-24 sm:size-44 xl:right-[max(2.5rem,calc((100vw-70rem)/4-5.5rem))]"
       : phase === "intro"
-        ? "right-5 bottom-16 size-36 scale-100 translate-y-0 opacity-100 sm:right-10 sm:bottom-20 sm:size-44 xl:right-[max(2.5rem,calc((100vw-70rem)/4-5.5rem))]"
-        : "right-5 bottom-5 size-14 scale-100 translate-y-0 opacity-100 sm:right-8 sm:bottom-7 xl:right-[max(2rem,calc((100vw-70rem)/4-1.75rem))]";
+        ? "right-5 bottom-20 size-36 scale-100 translate-y-0 opacity-100 sm:right-10 sm:bottom-24 sm:size-44 xl:right-[max(2.5rem,calc((100vw-70rem)/4-5.5rem))]"
+        : "right-5 bottom-16 size-14 scale-100 translate-y-0 opacity-100 sm:right-8 sm:bottom-[4.75rem] xl:right-[max(2rem,calc((100vw-70rem)/4-1.75rem))]";
 
   return (
     <>
@@ -653,7 +653,7 @@ export function AssistantWidget() {
           aria-label={`${FIRST_NAME}'s AI Introduction`}
           onMouseEnter={() => setAvatarHovered(true)}
           onMouseLeave={() => setAvatarHovered(false)}
-          className={`fixed right-[10.5rem] bottom-[4.5rem] z-50 flex max-w-[15.75rem] origin-right flex-col gap-2 overflow-hidden rounded-2xl rounded-br-sm border border-line-strong/90 bg-raised/94 px-4 py-3 text-left shadow-[0_22px_65px_-14px_var(--shadow)] backdrop-blur-xl transition-all duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] sm:right-[14.25rem] sm:bottom-[6.25rem] sm:max-w-[21rem] xl:right-[max(14.5rem,calc((100vw-70rem)/4+6.5rem))] ${
+          className={`fixed right-[10.5rem] bottom-[4.75rem] z-50 flex max-w-[15.75rem] origin-right flex-col gap-2 overflow-hidden rounded-2xl rounded-br-sm border border-line-strong/90 bg-raised/94 px-4 py-3 text-left shadow-[0_22px_65px_-14px_var(--shadow)] backdrop-blur-xl transition-all duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] sm:right-[14.25rem] sm:bottom-[6.25rem] sm:max-w-[21rem] xl:right-[max(14.5rem,calc((100vw-70rem)/4+6.5rem))] ${
             phase === "intro"
               ? "translate-x-0 scale-100 opacity-100 blur-0 delay-100"
               : "pointer-events-none translate-x-4 scale-95 opacity-0 blur-[5px]"
@@ -724,7 +724,7 @@ export function AssistantWidget() {
         onMouseEnter={() => setAvatarHovered(true)}
         onMouseLeave={() => setAvatarHovered(false)}
         aria-label={`Open ${FIRST_NAME} AI Assistant`}
-        className={`group fixed right-[5.25rem] bottom-[1.35rem] z-50 flex items-center gap-2.5 overflow-hidden rounded-full border border-line-strong/90 bg-raised/94 px-3.5 py-2 text-left shadow-[0_14px_40px_-10px_var(--shadow)] backdrop-blur-xl transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-accent sm:right-[6.25rem] sm:bottom-[1.85rem] xl:right-[calc(max(2rem,calc((100vw-70rem)/4-1.75rem))+4.25rem)] ${
+        className={`group fixed right-[5.25rem] bottom-[4.1rem] z-50 flex items-center gap-2.5 overflow-hidden rounded-full border border-line-strong/90 bg-raised/94 px-3.5 py-2 text-left shadow-[0_14px_40px_-10px_var(--shadow)] backdrop-blur-xl transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-accent sm:right-[6.25rem] sm:bottom-[4.85rem] xl:right-[calc(max(2rem,calc((100vw-70rem)/4-1.75rem))+4.25rem)] ${
           isMinimized && avatarHovered
             ? "translate-x-0 scale-100 opacity-100 blur-0"
             : "pointer-events-none translate-x-3 scale-95 opacity-0 blur-[3px]"
@@ -758,7 +758,7 @@ export function AssistantWidget() {
         <aside
           ref={drawerRef}
           aria-label={`${FIRST_NAME} AI Assistant Chat`}
-          className={`fixed inset-x-4 bottom-[5.25rem] z-50 flex h-[min(32rem,calc(100dvh-10.75rem))] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-line-strong/90 bg-raised/95 shadow-[0_28px_90px_-18px_var(--shadow)] backdrop-blur-xl transition-all duration-350 ease-[cubic-bezier(0.16,1,0.3,1)] sm:inset-x-auto sm:right-8 sm:bottom-[5.75rem] sm:h-[min(33rem,calc(100dvh-11.75rem))] sm:w-[26rem] ${
+          className={`fixed inset-x-4 bottom-[8.25rem] z-50 flex h-[min(31rem,calc(100dvh-13.75rem))] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-line-strong/90 bg-raised/95 shadow-[0_28px_90px_-18px_var(--shadow)] backdrop-blur-xl transition-all duration-350 ease-[cubic-bezier(0.16,1,0.3,1)] sm:inset-x-auto sm:right-8 sm:bottom-[9rem] sm:h-[min(32rem,calc(100dvh-15rem))] sm:w-[26rem] ${
             isChatVisible
               ? "translate-y-0 scale-100 opacity-100 blur-0"
               : "pointer-events-none translate-y-4 scale-[0.96] opacity-0 blur-[6px]"

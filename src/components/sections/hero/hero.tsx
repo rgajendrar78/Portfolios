@@ -129,7 +129,7 @@ export function Hero({ years }: { years: string }) {
             </div>
           </div>
 
-          <aside className="anim-in lg:col-span-4 lg:self-center" style={{ "--d": "500ms" }}>
+          <aside className="anim-in lg:col-span-4 lg:mt-2 lg:self-start" style={{ "--d": "500ms" }}>
             <div className="group card card-hover rounded-xl bg-raised/90 p-5 backdrop-blur-sm">
               <div className="flex items-center justify-between gap-3 border-b border-line pb-4">
                 <span className="grid size-12 shrink-0 place-items-center self-center rounded-xl border border-line-strong bg-bg">
@@ -193,7 +193,7 @@ export function Hero({ years }: { years: string }) {
 
         {/* The list is rendered twice so the scroll can loop without a gap. */}
         <div
-          className="anim-in -my-3 mt-9 overflow-hidden py-3 [mask-image:linear-gradient(90deg,transparent,black_8%,black_92%,transparent)]"
+          className="anim-in mt-12 -mb-3 overflow-hidden py-3 [mask-image:linear-gradient(90deg,transparent,black_8%,black_92%,transparent)] sm:mt-16"
           style={{ "--d": "700ms" }}
         >
           <ul className="flex w-max animate-marquee will-change-transform hover:[animation-play-state:paused]">
@@ -215,7 +215,7 @@ export function Hero({ years }: { years: string }) {
           </ul>
         </div>
 
-        <div className="anim-in mt-6" style={{ "--d": "820ms" }}>
+        <div className="anim-in mt-8 sm:mt-10" style={{ "--d": "820ms" }}>
           <Trace />
         </div>
       </div>
