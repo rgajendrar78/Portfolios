@@ -55,7 +55,7 @@ export const portfolio: Portfolio = {
   ],
 
   theme: {
-    defaultMode: "dark",
+    defaultMode: "system",
     light: {
       bg: "#f7f5f0",
       raised: "#ffffff",

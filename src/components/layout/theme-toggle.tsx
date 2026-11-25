@@ -1,11 +1,34 @@
 "use client";
 
+import { useEffect } from "react";
+
 export function ThemeToggle() {
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const syncWithSystem = (event?: MediaQueryListEvent) => {
+      try {
+        const saved = localStorage.getItem("theme");
+        if (saved === "light" || saved === "dark") return;
+      } catch {
+        // Ignore storage read errors and fall back to system preference.
+      }
+      const matches = event ? event.matches : media.matches;
+      document.documentElement.dataset.theme = matches ? "dark" : "light";
+    };
+
+    media.addEventListener("change", syncWithSystem);
+    return () => media.removeEventListener("change", syncWithSystem);
+  }, []);
+
   const toggle = () => {
     const root = document.documentElement;
     const next = root.dataset.theme === "dark" ? "light" : "dark";
     root.dataset.theme = next;
-    localStorage.setItem("theme", next);
+    try {
+      localStorage.setItem("theme", next);
+    } catch {
+      // Ignore storage write errors in restricted browsing modes.
+    }
   };
 
   return (

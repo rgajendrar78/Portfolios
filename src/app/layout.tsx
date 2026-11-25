@@ -37,10 +37,14 @@ const cssVars = (palette: Palette) =>
 
 const themeCss = `:root{${cssVars(theme.light)}}[data-theme="dark"]{${cssVars(theme.dark)}}`;
 
-// Runs before first paint so the saved / default theme never flashes.
-const themeScript = `(function(){try{var m=localStorage.getItem("theme")||${JSON.stringify(
+const fallbackTheme = theme.defaultMode === "system" ? "light" : theme.defaultMode;
+
+// Runs before first paint: honors saved user preference, else system theme, else light.
+const themeScript = `(function(){try{var s=localStorage.getItem("theme");var m=(s==="light"||s==="dark")?s:${JSON.stringify(
   theme.defaultMode,
-)};if(m==="system")m=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.dataset.theme=m}catch(e){}})()`;
+)};if(m==="system"){m=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.dataset.theme=m}catch(e){document.documentElement.dataset.theme=${JSON.stringify(
+  fallbackTheme,
+)}}})()`;
 
 const personJsonLd = {
   "@context": "https://schema.org",
@@ -57,7 +61,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={roboto.variable} data-theme={theme.defaultMode} suppressHydrationWarning>
+    <html lang="en" className={roboto.variable} data-theme={fallbackTheme} suppressHydrationWarning>
       <head>
         <style dangerouslySetInnerHTML={{ __html: themeCss }} />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />

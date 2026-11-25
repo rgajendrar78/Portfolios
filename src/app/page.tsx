@@ -1,3 +1,4 @@
+import { AssistantWidget } from "@/components/assistant/assistant-widget";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { RevealOnScroll } from "@/components/motion/reveal-on-scroll";
@@ -52,6 +53,7 @@ export default function Home() {
         </Section>
       </main>
       <Footer year={now.getFullYear()} />
+      <AssistantWidget />
       <RevealOnScroll />
       <SmoothScroll />
     </>
