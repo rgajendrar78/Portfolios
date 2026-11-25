@@ -92,15 +92,13 @@ export function AvatarCanvas({
     const prevMood = moodRef.current;
     moodRef.current = mood;
     if (mood === "intro" && prevMood !== "intro") {
-      spinVelocityRef.current = Math.PI * 0.65;
-      scalePulseRef.current = 0.14;
+      spinVelocityRef.current = Math.PI * 0.5;
     } else if (mood === "docking" && prevMood !== "docking") {
-      spinVelocityRef.current = Math.PI;
-      scalePulseRef.current = -0.06;
+      spinVelocityRef.current = Math.PI * 0.75;
     } else if (mood === "speaking" && prevMood !== "speaking") {
-      scalePulseRef.current = 0.08;
+      scalePulseRef.current = 0.06;
     } else if (mood === "listening" && prevMood === "idle") {
-      scalePulseRef.current = 0.09;
+      scalePulseRef.current = 0.06;
     }
   }, [mood]);
 
@@ -496,10 +494,11 @@ export function AvatarCanvas({
       const isHovered = hoveredRef.current;
       const motionScale = reducedMotion ? 0.12 : 1;
 
-      const targetZ = activeVariant === "orb" ? 3.55 : 4.15;
-      const targetY = activeVariant === "orb" ? 0.22 : 0.18;
-      camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetZ, 0.09);
-      camera.position.y = THREE.MathUtils.lerp(camera.position.y, targetY, 0.09);
+      const smoothLerp = 1 - Math.exp(-5.5 * dt);
+      const targetZ = activeVariant === "orb" ? 3.8 : 4.15;
+      const targetY = activeVariant === "orb" ? 0.2 : 0.18;
+      camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetZ, smoothLerp);
+      camera.position.y = THREE.MathUtils.lerp(camera.position.y, targetY, smoothLerp);
       camera.lookAt(0, 0.1, 0);
 
       if (!reducedMotion && Math.abs(spinVelocityRef.current) > 0.01) {
@@ -613,7 +612,7 @@ export function AvatarCanvas({
       });
 
       const targetArmBlend = activeVariant === "intro" && activeMood === "intro" ? 1 : 0;
-      armVisibilityBlend = THREE.MathUtils.lerp(armVisibilityBlend, targetArmBlend, 0.12);
+      armVisibilityBlend = THREE.MathUtils.lerp(armVisibilityBlend, targetArmBlend, 1 - Math.exp(-6.5 * dt));
       armPivot.visible = armVisibilityBlend > 0.03;
       armPivot.scale.setScalar(armVisibilityBlend);
       if (armPivot.visible && !reducedMotion) {

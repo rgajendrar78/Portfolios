@@ -49,8 +49,8 @@ export function Hero({ years }: { years: string }) {
       <Ruler side="right-0" />
 
       <div className="shell relative">
-        <div className="grid gap-y-12 lg:grid-cols-12 lg:gap-x-10">
-          <div className="min-w-0 lg:col-span-8">
+        <div className="grid gap-y-8 lg:grid-cols-12 lg:gap-x-10 lg:gap-y-0">
+          <div className="min-w-0 lg:col-span-8 lg:col-start-1 lg:row-start-1">
             <p className="anim-in flex flex-col gap-1.5 text-xs text-muted sm:flex-row sm:items-center sm:gap-3">
               <span className="inline-flex items-center gap-2 text-ok">
                 <span className="relative flex size-1.5" aria-hidden>
@@ -110,27 +110,31 @@ export function Hero({ years }: { years: string }) {
               ))}
             </ol>
 
-            <div
-              className="anim-in mt-8 flex flex-wrap items-center gap-x-7 gap-y-4 text-sm"
-              style={{ "--d": "440ms" }}
-            >
-              <a href="#work" className={CTA}>
-                See the work
-                <span aria-hidden className="transition-transform duration-200 group-hover:translate-y-0.5">
-                  ↓
-                </span>
-              </a>
-              <a href={person.resumeUrl} target="_blank" rel="noreferrer" className="link">
-                Resume (PDF) ↗
-              </a>
-              <a href={`mailto:${person.email}`} className="link">
-                Email me
-              </a>
-            </div>
           </div>
 
-          <aside className="anim-in lg:col-span-4 lg:mt-2 lg:self-start" style={{ "--d": "500ms" }}>
-            <div className="group card card-hover rounded-xl bg-raised/90 p-5 backdrop-blur-sm">
+          <div
+            className="anim-in flex flex-wrap items-center gap-x-7 gap-y-4 text-sm lg:col-span-8 lg:col-start-1 lg:row-start-2 lg:mt-8"
+            style={{ "--d": "440ms" }}
+          >
+            <a href="#work" className={CTA}>
+              See the work
+              <span aria-hidden className="transition-transform duration-200 group-hover:translate-y-0.5">
+                ↓
+              </span>
+            </a>
+            <a href={person.resumeUrl} target="_blank" rel="noreferrer" className="link">
+              Resume (PDF) ↗
+            </a>
+            <a href={`mailto:${person.email}`} className="link">
+              Email me
+            </a>
+          </div>
+
+          <aside
+            className="anim-in max-lg:mt-4 lg:col-span-4 lg:col-start-9 lg:row-start-1 lg:self-stretch"
+            style={{ "--d": "500ms" }}
+          >
+            <div className="group card card-hover flex h-full flex-col justify-between gap-4 rounded-xl bg-raised/90 p-5 backdrop-blur-sm">
               <div className="flex items-center justify-between gap-3 border-b border-line pb-4">
                 <span className="grid size-12 shrink-0 place-items-center self-center rounded-xl border border-line-strong bg-bg">
                   <Icon
@@ -148,7 +152,7 @@ export function Hero({ years }: { years: string }) {
                 </p>
               </div>
 
-              <ol className="relative mt-4 space-y-3 pl-5 before:absolute before:top-2 before:bottom-2 before:left-[3px] before:w-px before:bg-line-strong">
+              <ol className="relative space-y-3 pl-5 before:absolute before:top-2 before:bottom-2 before:left-[3px] before:w-px before:bg-line-strong">
                 {timeline.map((role, index) => {
                   const current = index === timeline.length - 1;
                   return (
@@ -177,7 +181,7 @@ export function Hero({ years }: { years: string }) {
                 })}
               </ol>
 
-              <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-line pt-3 text-[0.78125rem] text-muted">
+              <div className="flex flex-wrap gap-x-4 gap-y-1.5 border-t border-line pt-3 text-[0.78125rem] text-muted">
                 <span className="inline-flex items-center gap-1.5">
                   <Icon name="pin" className="size-4" />
                   {person.location}
@@ -193,7 +197,7 @@ export function Hero({ years }: { years: string }) {
 
         {/* The list is rendered twice so the scroll can loop without a gap. */}
         <div
-          className="anim-in mt-12 -mb-3 overflow-hidden py-3 [mask-image:linear-gradient(90deg,transparent,black_8%,black_92%,transparent)] sm:mt-16"
+          className="anim-in mt-5 -mb-3 overflow-hidden py-3 [mask-image:linear-gradient(90deg,transparent,black_8%,black_92%,transparent)] sm:mt-6"
           style={{ "--d": "700ms" }}
         >
           <ul className="flex w-max animate-marquee will-change-transform hover:[animation-play-state:paused]">
@@ -215,7 +219,7 @@ export function Hero({ years }: { years: string }) {
           </ul>
         </div>
 
-        <div className="anim-in mt-8 sm:mt-10" style={{ "--d": "820ms" }}>
+        <div className="anim-in mt-6" style={{ "--d": "820ms" }}>
           <Trace />
         </div>
       </div>

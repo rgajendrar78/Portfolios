@@ -6,6 +6,8 @@ import { experienceYears } from "@/lib/derive";
 import { AvatarCanvas, type AvatarMood } from "./avatar-canvas";
 import { MessageText } from "./message-text";
 
+// ─── Types ───────────────────────────────────────────────────────────────────
+
 type WidgetPhase = "entering" | "intro" | "docking" | "minimized" | "opening" | "open" | "closing";
 
 interface ChatMessage {
@@ -15,24 +17,34 @@ interface ChatMessage {
   isError?: boolean;
 }
 
+interface StreamingState {
+  id: string;
+  fullText: string;
+  shownChars: number;
+}
+
+// ─── Constants ───────────────────────────────────────────────────────────────
+
 const INTRO_DURATION_MS = 6200;
-const DOCK_TRANSITION_MS = 820;
+const DOCK_TRANSITION_MS = 900;
 const CHAT_CLOSE_TRANSITION_MS = 280;
+const SESSION_KEY = "gajendra-intro-idx";
 
 const FIRST_NAME = portfolio.person.name.split(" ")[0];
 const YEARS = experienceYears();
+
 const INTRO_MESSAGES = [
   `Hi! I'm ${FIRST_NAME} AI Assistant — ask about ${FIRST_NAME}'s skills, architecture & work.`,
   `Meet ${FIRST_NAME} AI Assistant — explore his NestJS, gRPC, AWS & Applied AI systems.`,
   `Hey! Ask ${FIRST_NAME} AI Assistant about FieldTracking360, payments, or open roles.`,
   `${FIRST_NAME} AI Assistant here — get a quick overview of ${FIRST_NAME}'s ${YEARS} yrs engineering impact.`,
 ];
+
 const INTRO_HIGHLIGHTS = [
   { text: "NestJS & React", dotClass: "bg-accent" },
   { text: "10+ AWS & AI", dotClass: "bg-sky" },
   { text: `${YEARS} yrs exp`, dotClass: "bg-ok" },
 ];
-const GENERIC_FALLBACK_REPLY = `I'll be back shortly! Meanwhile, feel free to connect with ${FIRST_NAME} directly at mailto:${portfolio.person.email}.`;
 
 const DOCK_HINTS = [
   `Hiring? Ask about ${FIRST_NAME}'s roles`,
@@ -126,6 +138,8 @@ const STARTER_CARDS = [
   },
 ];
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 const emptySubscribe = () => () => {};
 
 function makeId() {
@@ -134,15 +148,21 @@ function makeId() {
 
 function getTimeGreeting() {
   if (typeof window === "undefined") return "Hello";
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
   return "Good evening";
 }
 
 function buildInitialGreeting() {
   return `${getTimeGreeting()}! I'm ${FIRST_NAME} AI Assistant. ${FIRST_NAME} has delivered 12+ projects across NestJS microservices, React/Next.js, AWS, and Applied AI. Pick a topic below or ask anything!`;
 }
+
+function makeAssistantMsg(content: string, isError = false): ChatMessage {
+  return { id: makeId(), role: "assistant", content, isError };
+}
+
+const GENERIC_FALLBACK = `I'll be back shortly! Meanwhile, feel free to connect with ${FIRST_NAME} directly at mailto:${portfolio.person.email}.`;
 
 function getContextualFollowUps(
   lastUserPrompt: string,
@@ -161,7 +181,10 @@ function getContextualFollowUps(
       `What does ${FIRST_NAME} build at ${currentCompany}?`,
       `Tell me about ${portfolio.work.projects[0]?.name ?? "FieldTracking360"}`,
     );
-  } else if (/\b(devstree|current|present)\b/.test(combined) && /\b(company|com\w*y|role|work|experience)\b/.test(combined)) {
+  } else if (
+    /\b(devstree|current|present)\b/.test(combined) &&
+    /\b(company|com\w*y|role|work|experience)\b/.test(combined)
+  ) {
     topicCandidates.push(
       `What was ${FIRST_NAME}'s previous company?`,
       `Explain his NestJS, gRPC & Redis setup`,
@@ -187,10 +210,7 @@ function getContextualFollowUps(
       `Tell me about ${portfolio.work.projects[0]?.name ?? "FieldTracking360"}`,
     );
   } else if (/\b(aws|docker|nginx|devops|ec2|s3|lambda)\b/.test(combined)) {
-    topicCandidates.push(
-      "How did he cut API latency by 30%?",
-      "Tell me about his Applied AI work",
-    );
+    topicCandidates.push("How did he cut API latency by 30%?", "Tell me about his Applied AI work");
   } else if (/\b(mca|educat|cert|medi|google)\b/.test(combined)) {
     topicCandidates.push(
       `Walk me through ${FIRST_NAME}'s ${YEARS} yrs experience`,
@@ -219,7 +239,14 @@ function getContextualFollowUps(
       .toLowerCase()
       .replace(/[^a-z0-9\s]/g, " ")
       .split(/\s+/)
-      .filter((t) => t.length >= 4 && t !== FIRST_NAME.toLowerCase() && t !== "gajendra" && t !== "about" && t !== "tell");
+      .filter(
+        (t) =>
+          t.length >= 4 &&
+          t !== FIRST_NAME.toLowerCase() &&
+          t !== "gajendra" &&
+          t !== "about" &&
+          t !== "tell",
+      );
     return askedLower.some((prev) => {
       if (prev === candidate.toLowerCase()) return true;
       const hits = tokens.filter((tok) => prev.includes(tok));
@@ -230,27 +257,77 @@ function getContextualFollowUps(
   const unique: string[] = [];
   for (const item of [...topicCandidates, ...rotationPool]) {
     if (unique.length >= 2) break;
-    if (!unique.includes(item) && !isAlreadyAsked(item)) {
-      unique.push(item);
-    }
+    if (!unique.includes(item) && !isAlreadyAsked(item)) unique.push(item);
   }
 
   return unique.length > 0 ? unique : rotationPool.slice(0, 2);
 }
 
+// ─── Shared UI Primitives ─────────────────────────────────────────────────────
+
+/** Animated online status dot with ping ring */
+function OnlineDot({ size = 2 }: { size?: 1.5 | 2 }) {
+  const cls = size === 2 ? "size-2" : "size-1.5";
+  return (
+    <span className={`relative flex ${cls} shrink-0`} aria-hidden>
+      <span className={`absolute inset-0 animate-ping rounded-full bg-ok opacity-65`} />
+      <span className={`relative ${cls} rounded-full bg-ok`} />
+    </span>
+  );
+}
+
+/** Gradient "Gajendra AI Assistant" text */
+function GradientName() {
+  return (
+    <span className="bg-gradient-to-r from-ink via-accent to-violet bg-clip-text text-transparent">
+      {FIRST_NAME} AI Assistant
+    </span>
+  );
+}
+
+/** Small header action button */
+function HeaderBtn({
+  onClick,
+  title,
+  label,
+  active,
+  children,
+}: {
+  onClick: () => void;
+  title: string;
+  label?: string;
+  active?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      aria-label={label ?? title}
+      className={`rounded-md border px-2 py-0.5 text-[0.6875rem] transition-colors ${
+        active
+          ? "border-accent/60 bg-tint text-ink"
+          : "border-transparent text-muted hover:border-line hover:text-ink"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
 /**
- * 3D AI Assistant (`Gajendra's AI`):
- * - Greets visitors on first load with the waving 3D avatar and improved floating speech pill
- * - Glides smoothly into the bottom-right `Gajendra's AI` (`⌘K`) capsule
- * - Third-person assistant voice speaking about Gajendra with rich topic menus & toggleable menu drawer
+ * AssistantWidget — 3D AI chat widget for the portfolio:
+ * - Intro: waving 3D avatar + floating speech panel, auto-docks after `INTRO_DURATION_MS`
+ * - Docked: gradient orb pill with hover label; ⌘K or click to open
+ * - Open: slide-up chat drawer with streaming replies, follow-up chips & topic cards
  */
 export function AssistantWidget() {
-  const isClient = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false,
-  );
+  const isClient = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
+  // ── Phase ──
   const [phase, setPhase] = useState<WidgetPhase>(() => {
     if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       return "minimized";
@@ -258,10 +335,11 @@ export function AssistantWidget() {
     return "entering";
   });
 
+  // ── Intro state ──
   const [introIndex, setIntroIndex] = useState(() => {
     if (typeof window === "undefined") return 0;
     try {
-      const prev = Number.parseInt(sessionStorage.getItem("gajendra-intro-idx") ?? "-1", 10);
+      const prev = Number.parseInt(sessionStorage.getItem(SESSION_KEY) ?? "-1", 10);
       return Number.isFinite(prev) ? (prev + 1) % INTRO_MESSAGES.length : 0;
     } catch {
       return 0;
@@ -271,15 +349,21 @@ export function AssistantWidget() {
   const [dockHintIndex, setDockHintIndex] = useState(0);
   const [avatarHovered, setAvatarHovered] = useState(false);
   const [transitionKey, setTransitionKey] = useState(0);
-  const [showTopicMenu, setShowTopicMenu] = useState(false);
 
+  // ── Chat state ──
+  const [showTopicMenu, setShowTopicMenu] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
     { id: "welcome", role: "assistant", content: buildInitialGreeting() },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [streamingMsg, setStreamingMsg] = useState<StreamingState | null>(null);
+  const [followUps, setFollowUps] = useState<string[]>([]);
+  const [thinkingIndex, setThinkingIndex] = useState(0);
+  const [thinkingSeconds, setThinkingSeconds] = useState(0);
 
+  // ── Refs ──
   const drawerRef = useRef<HTMLElement>(null);
   const avatarButtonRef = useRef<HTMLButtonElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -287,11 +371,10 @@ export function AssistantWidget() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const phaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [streamingMsg, setStreamingMsg] = useState<{ id: string; fullText: string; shownChars: number } | null>(null);
-  const [followUps, setFollowUps] = useState<string[]>([]);
-  const [thinkingIndex, setThinkingIndex] = useState(0);
-  const [thinkingSeconds, setThinkingSeconds] = useState(0);
 
+  // ─── Effects ───────────────────────────────────────────────────────────────
+
+  // Thinking ticker while loading
   useEffect(() => {
     if (!isLoading) return;
     const phraseTimer = setInterval(() => {
@@ -306,95 +389,56 @@ export function AssistantWidget() {
     };
   }, [isLoading]);
 
+  // Clear phase timers on unmount
   const clearTimers = useCallback(() => {
-    if (phaseTimerRef.current) {
-      clearTimeout(phaseTimerRef.current);
-      phaseTimerRef.current = null;
-    }
-    if (openTimerRef.current) {
-      clearTimeout(openTimerRef.current);
-      openTimerRef.current = null;
-    }
+    if (phaseTimerRef.current) { clearTimeout(phaseTimerRef.current); phaseTimerRef.current = null; }
+    if (openTimerRef.current) { clearTimeout(openTimerRef.current); openTimerRef.current = null; }
   }, []);
 
+  useEffect(() => () => { clearTimers(); }, [clearTimers]);
+
+  // "entering" → "intro": wait two rAF frames + small timeout so browser paints
+  // the initial scale-down before the CSS transition fires (prevents jump)
   useEffect(() => {
     if (!isClient || phase !== "entering") return;
-    const timer = setTimeout(() => {
-      setPhase("intro");
-    }, 45);
-    return () => clearTimeout(timer);
+    let raf2 = 0;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        timer = setTimeout(() => setPhase("intro"), 120);
+      });
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      if (timer) clearTimeout(timer);
+    };
   }, [isClient, phase]);
+
+  // Intro typewriter + auto-dock
+  const activeIntroLine = INTRO_MESSAGES[introIndex % INTRO_MESSAGES.length];
 
   const startDocking = useCallback(() => {
     clearTimers();
     setPhase("docking");
-    phaseTimerRef.current = setTimeout(() => {
-      setPhase("minimized");
-    }, DOCK_TRANSITION_MS);
+    phaseTimerRef.current = setTimeout(() => setPhase("minimized"), DOCK_TRANSITION_MS);
   }, [clearTimers]);
-
-  const openChat = useCallback(() => {
-    clearTimers();
-    setPhase("opening");
-    openTimerRef.current = setTimeout(() => {
-      setPhase("open");
-      setTimeout(() => {
-        textareaRef.current?.focus();
-      }, 60);
-    }, 20);
-  }, [clearTimers]);
-
-  const closeChat = useCallback(() => {
-    clearTimers();
-    setShowTopicMenu(false);
-    setPhase("closing");
-    phaseTimerRef.current = setTimeout(() => {
-      setPhase("minimized");
-    }, CHAT_CLOSE_TRANSITION_MS);
-  }, [clearTimers]);
-
-  const replayIntro = useCallback(() => {
-    clearTimers();
-    setShowTopicMenu(false);
-    setIntroTypedCount(0);
-    setIntroIndex((prev) => {
-      const next = (prev + 1) % INTRO_MESSAGES.length;
-      try {
-        sessionStorage.setItem("gajendra-intro-idx", String(next));
-      } catch {
-        // Ignore storage restrictions.
-      }
-      return next;
-    });
-    setTransitionKey((k) => k + 1);
-    setPhase("entering");
-  }, [clearTimers]);
-
-  const activeIntroLine = INTRO_MESSAGES[introIndex % INTRO_MESSAGES.length];
 
   useEffect(() => {
     if (!isClient || phase !== "intro") return;
-
-    try {
-      sessionStorage.setItem("gajendra-intro-idx", String(introIndex));
-    } catch {
-      // Ignore storage restrictions.
-    }
+    try { sessionStorage.setItem(SESSION_KEY, String(introIndex)); } catch { /* ignore */ }
 
     const typeTimer = setInterval(() => {
       setIntroTypedCount((prev) => (prev < activeIntroLine.length ? prev + 2 : prev));
     }, 32);
-
-    const dockTimer = setTimeout(() => {
-      startDocking();
-    }, INTRO_DURATION_MS);
-
+    const dockTimer = setTimeout(() => startDocking(), INTRO_DURATION_MS);
     return () => {
       clearInterval(typeTimer);
       clearTimeout(dockTimer);
     };
   }, [isClient, phase, introIndex, activeIntroLine, startDocking]);
 
+  // Dock-hint rotation while minimized
   useEffect(() => {
     if (!isClient || phase !== "minimized") return;
     const timer = setInterval(() => {
@@ -403,76 +447,37 @@ export function AssistantWidget() {
     return () => clearInterval(timer);
   }, [isClient, phase]);
 
+  // Streaming word-by-word reveal
   useEffect(() => {
     if (!streamingMsg) return;
-
     const timer = setInterval(() => {
       setStreamingMsg((prev) => {
         if (!prev) return null;
-        if (prev.shownChars >= prev.fullText.length) {
-          clearInterval(timer);
-          return null;
-        }
+        if (prev.shownChars >= prev.fullText.length) { clearInterval(timer); return null; }
         const remaining = prev.fullText.slice(prev.shownChars);
         const stepMatch = remaining.match(/^\S+\s*/);
         const step = Math.max(3, stepMatch ? stepMatch[0].length : 4);
         const nextChars = Math.min(prev.fullText.length, prev.shownChars + step);
-        if (nextChars >= prev.fullText.length) {
-          clearInterval(timer);
-          return null;
-        }
+        if (nextChars >= prev.fullText.length) { clearInterval(timer); return null; }
         return { ...prev, shownChars: nextChars };
       });
     }, 22);
-
     return () => clearInterval(timer);
   }, [streamingMsg?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Auto-scroll to latest message
   useEffect(() => {
-    if (phase === "open") {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
+    if (phase === "open") messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamingMsg?.shownChars, isLoading, phase]);
 
+  // Auto-scroll to topic menu when opened
   useEffect(() => {
     if (phase === "open" && showTopicMenu) {
       topicMenuRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [phase, showTopicMenu]);
 
-  useEffect(() => {
-    if (!isClient || (phase !== "open" && phase !== "opening")) return;
-
-    const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target;
-      if (!(target instanceof Node)) return;
-      if (drawerRef.current?.contains(target) || avatarButtonRef.current?.contains(target)) {
-        return;
-      }
-      closeChat();
-    };
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [isClient, phase, closeChat]);
-
-  useEffect(() => {
-    if (!isClient) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        if (phase === "open" || phase === "opening") closeChat();
-        else openChat();
-        return;
-      }
-      if (event.key !== "Escape") return;
-      if (phase === "intro") startDocking();
-      else if (phase === "open" || phase === "opening") closeChat();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isClient, phase, startDocking, openChat, closeChat]);
-
+  // Rate-limit cooldown ticker
   useEffect(() => {
     if (cooldownSeconds <= 0) return;
     const timer = setInterval(() => {
@@ -481,11 +486,69 @@ export function AssistantWidget() {
     return () => clearInterval(timer);
   }, [cooldownSeconds]);
 
-  useEffect(() => {
-    return () => {
-      clearTimers();
-    };
+  // ─── Phase Transitions ─────────────────────────────────────────────────────
+
+  const openChat = useCallback(() => {
+    clearTimers();
+    setPhase("opening");
+    openTimerRef.current = setTimeout(() => {
+      setPhase("open");
+      setTimeout(() => textareaRef.current?.focus(), 60);
+    }, 20);
   }, [clearTimers]);
+
+  const closeChat = useCallback(() => {
+    clearTimers();
+    setShowTopicMenu(false);
+    setPhase("closing");
+    phaseTimerRef.current = setTimeout(() => setPhase("minimized"), CHAT_CLOSE_TRANSITION_MS);
+  }, [clearTimers]);
+
+  const replayIntro = useCallback(() => {
+    clearTimers();
+    setShowTopicMenu(false);
+    setIntroTypedCount(0);
+    setIntroIndex((prev) => {
+      const next = (prev + 1) % INTRO_MESSAGES.length;
+      try { sessionStorage.setItem(SESSION_KEY, String(next)); } catch { /* ignore */ }
+      return next;
+    });
+    setTransitionKey((k) => k + 1);
+    setPhase("entering");
+  }, [clearTimers]);
+
+  // Click-outside closes the drawer
+  useEffect(() => {
+    if (!isClient || (phase !== "open" && phase !== "opening")) return;
+    const handlePointerDown = (e: PointerEvent) => {
+      const target = e.target;
+      if (!(target instanceof Node)) return;
+      if (drawerRef.current?.contains(target) || avatarButtonRef.current?.contains(target)) return;
+      closeChat();
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [isClient, phase, closeChat]);
+
+  // Global keyboard shortcuts: ⌘K toggles chat, Escape docks/closes
+  useEffect(() => {
+    if (!isClient) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        if (phase === "open" || phase === "opening") closeChat();
+        else openChat();
+        return;
+      }
+      if (e.key !== "Escape") return;
+      if (phase === "intro") startDocking();
+      else if (phase === "open" || phase === "opening") closeChat();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isClient, phase, startDocking, openChat, closeChat]);
+
+  // ─── Send Message ──────────────────────────────────────────────────────────
 
   const sendMessage = useCallback(
     async (rawText: string) => {
@@ -493,8 +556,8 @@ export function AssistantWidget() {
       if (!text || isLoading || cooldownSeconds > 0) return;
 
       const userMsg: ChatMessage = { id: makeId(), role: "user", content: text };
-      const nextThread = [...messages, userMsg];
-      setMessages(nextThread);
+      const thread = [...messages, userMsg];
+      setMessages(thread);
       setStreamingMsg(null);
       setFollowUps([]);
       setShowTopicMenu(false);
@@ -503,12 +566,12 @@ export function AssistantWidget() {
       setThinkingSeconds(0);
       setIsLoading(true);
 
-      const apiMessages = nextThread
+      const apiMessages = thread
         .filter((m) => !m.isError && m.id !== "welcome")
         .slice(-6)
         .map((m) => ({ role: m.role, content: m.content.slice(0, 1200) }));
 
-      const askedHistory = nextThread.filter((m) => m.role === "user").map((m) => m.content);
+      const askedHistory = thread.filter((m) => m.role === "user").map((m) => m.content);
 
       try {
         const res = await fetch("/api/assistant", {
@@ -527,77 +590,47 @@ export function AssistantWidget() {
 
         if (res.status === 429) {
           if (data.reason === "ip_rpm") {
-            const waitSecs = Math.min(Math.max(Math.ceil(data.retryAfter ?? 12), 3), 60);
-            setCooldownSeconds(waitSecs);
+            setCooldownSeconds(Math.min(Math.max(Math.ceil(data.retryAfter ?? 12), 3), 60));
           }
-
           if (data.fallbackReply) {
             setMessages((prev) => {
+              // Deduplicate: skip if the last assistant message is identical
               const lastAssistant = [...prev].reverse().find((m) => m.role === "assistant");
               if (lastAssistant?.content === data.fallbackReply) return prev;
-              return [
-                ...prev,
-                {
-                  id: makeId(),
-                  role: "assistant",
-                  content: data.fallbackReply!,
-                },
-              ];
+              return [...prev, makeAssistantMsg(data.fallbackReply!)];
             });
             setFollowUps(getContextualFollowUps(text, data.fallbackReply, askedHistory));
           } else if (data.reason !== "ip_rpm") {
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: makeId(),
-                role: "assistant",
-                isError: true,
-                content: data.error
-                  ? data.error.replace(portfolio.person.email, `mailto:${portfolio.person.email}`)
-                  : GENERIC_FALLBACK_REPLY,
-              },
-            ]);
+            const errorContent = data.error
+              ? data.error.replace(portfolio.person.email, `mailto:${portfolio.person.email}`)
+              : GENERIC_FALLBACK;
+            setMessages((prev) => [...prev, makeAssistantMsg(errorContent, true)]);
           }
           return;
         }
 
         if (!res.ok || !data.reply) {
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: makeId(),
-              role: "assistant",
-              isError: true,
-              content: data.fallbackReply ?? GENERIC_FALLBACK_REPLY,
-            },
-          ]);
+          setMessages((prev) => [...prev, makeAssistantMsg(data.fallbackReply ?? GENERIC_FALLBACK, true)]);
           return;
         }
 
         const replyId = makeId();
-        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         setMessages((prev) => [...prev, { id: replyId, role: "assistant", content: data.reply! }]);
         setFollowUps(getContextualFollowUps(text, data.reply, askedHistory));
 
-        if (!reducedMotion) {
+        if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
           setStreamingMsg({ id: replyId, fullText: data.reply, shownChars: 1 });
         }
       } catch {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: makeId(),
-            role: "assistant",
-            isError: true,
-            content: GENERIC_FALLBACK_REPLY,
-          },
-        ]);
+        setMessages((prev) => [...prev, makeAssistantMsg(GENERIC_FALLBACK, true)]);
       } finally {
         setIsLoading(false);
       }
     },
     [isLoading, cooldownSeconds, messages],
   );
+
+  // ─── Derived Render State ──────────────────────────────────────────────────
 
   if (!isClient) return null;
 
@@ -607,6 +640,7 @@ export function AssistantWidget() {
   const isChatVisible = phase === "open";
   const isMinimized = phase === "minimized";
   const isSpeakingNow = Boolean(streamingMsg);
+  const hasUserMessages = messages.some((m) => m.role === "user");
 
   const activeMood: AvatarMood =
     phase === "entering" || phase === "intro"
@@ -621,22 +655,26 @@ export function AssistantWidget() {
               ? "listening"
               : "idle";
 
-  const hasUserMessages = messages.some((m) => m.role === "user");
-
+  // Bot scales up from its resting corner — no X drift between phases
   const avatarStageClass =
     phase === "entering"
-      ? "right-5 bottom-20 size-36 scale-75 translate-y-6 opacity-0 sm:right-10 sm:bottom-24 sm:size-44 xl:right-[max(2.5rem,calc((100vw-70rem)/4-5.5rem))]"
+      ? "translate-x-0 translate-y-8 scale-[0.34] opacity-0 sm:scale-[0.28]"
       : phase === "intro"
-        ? "right-5 bottom-20 size-36 scale-100 translate-y-0 opacity-100 sm:right-10 sm:bottom-24 sm:size-44 xl:right-[max(2.5rem,calc((100vw-70rem)/4-5.5rem))]"
-        : "right-5 bottom-16 size-14 scale-100 translate-y-0 opacity-100 sm:right-8 sm:bottom-[4.75rem] xl:right-[max(2rem,calc((100vw-70rem)/4-1.75rem))]";
+        ? "translate-x-0 translate-y-0 scale-100 opacity-100"
+        : "translate-x-0 translate-y-0 scale-[0.39] opacity-100 sm:scale-[0.32]";
+
+  const SPRING = "ease-[cubic-bezier(0.22,1,0.36,1)]";
+  const AVATAR_RIGHT = "right-5 sm:right-8 xl:right-[max(2rem,calc((100vw-70rem)/4-1.75rem))]";
+
+  // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
     <>
-      {/* Ambient Warm Spotlight behind 3D Intro */}
+      {/* ── Ambient spotlight (intro only) ── */}
       {showIntroCaption && (
         <div
           aria-hidden
-          className={`pointer-events-none fixed inset-0 z-40 transition-opacity duration-800 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          className={`pointer-events-none fixed inset-0 z-40 transition-opacity duration-800 ${SPRING} ${
             phase === "intro" ? "opacity-100" : "opacity-0"
           }`}
           style={{
@@ -646,19 +684,20 @@ export function AssistantWidget() {
         />
       )}
 
-      {/* Staggered Highlight Intro Speech Panel beside the Waving 3D Avatar */}
+      {/* ── Intro speech panel ── */}
       {showIntroCaption && (
         <div
           role="region"
           aria-label={`${FIRST_NAME}'s AI Introduction`}
           onMouseEnter={() => setAvatarHovered(true)}
           onMouseLeave={() => setAvatarHovered(false)}
-          className={`fixed right-[10.5rem] bottom-[4.75rem] z-50 flex max-w-[15.75rem] origin-right flex-col gap-2 overflow-hidden rounded-2xl rounded-br-sm border border-line-strong/90 bg-raised/94 px-4 py-3 text-left shadow-[0_22px_65px_-14px_var(--shadow)] backdrop-blur-xl transition-all duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] sm:right-[14.25rem] sm:bottom-[6.25rem] sm:max-w-[21rem] xl:right-[max(14.5rem,calc((100vw-70rem)/4+6.5rem))] ${
+          className={`fixed right-[11.25rem] bottom-[4.75rem] z-50 flex max-w-[15.75rem] origin-right flex-col gap-2 overflow-hidden rounded-2xl rounded-br-sm border border-line-strong/90 bg-raised/94 px-4 py-3 text-left shadow-[0_22px_65px_-14px_var(--shadow)] backdrop-blur-xl transition-all duration-600 ${SPRING} sm:right-[14.75rem] sm:bottom-[5.5rem] sm:max-w-[21rem] xl:right-[max(14.75rem,calc((100vw-70rem)/4+11rem))] ${
             phase === "intro"
               ? "translate-x-0 scale-100 opacity-100 blur-0 delay-100"
               : "pointer-events-none translate-x-4 scale-95 opacity-0 blur-[5px]"
           }`}
         >
+          {/* Decorative corner glow */}
           <span
             aria-hidden
             className="pointer-events-none absolute -top-16 -right-14 size-44 rounded-full"
@@ -667,17 +706,15 @@ export function AssistantWidget() {
                 "radial-gradient(closest-side, color-mix(in oklab, var(--accent) 8%, transparent), color-mix(in oklab, var(--violet) 4%, transparent) 60%, transparent 85%)",
             }}
           />
+
+          {/* Header: online dot + name */}
           <span className="relative flex items-center gap-1.5 text-[0.625rem] font-medium tracking-wider uppercase">
-            <span className="relative flex size-1.5" aria-hidden>
-              <span className="absolute inset-0 animate-ping rounded-full bg-ok opacity-75" />
-              <span className="relative size-1.5 rounded-full bg-ok" />
-            </span>
-            <span className="bg-gradient-to-r from-ink via-accent to-violet bg-clip-text text-transparent">
-              {FIRST_NAME} AI Assistant
-            </span>
+            <OnlineDot size={1.5} />
+            <GradientName />
             <span className="text-ok">· Online</span>
           </span>
 
+          {/* Typewriter text */}
           <span className="relative text-xs leading-snug font-medium text-ink sm:text-[0.84375rem]">
             {activeIntroLine.slice(0, introTypedCount)}
             {introTypedCount < activeIntroLine.length && (
@@ -685,13 +722,13 @@ export function AssistantWidget() {
             )}
           </span>
 
-          {/* Staggered Highlight Chips */}
+          {/* Staggered highlight chips */}
           <span className="relative flex flex-wrap gap-1.5">
             {INTRO_HIGHLIGHTS.map((item, idx) => (
               <span
                 key={item.text}
                 style={{ transitionDelay: phase === "intro" ? `${220 + idx * 110}ms` : "0ms" }}
-                className={`inline-flex items-center gap-1 rounded-full border border-line bg-bg/85 px-2 py-0.5 text-[0.625rem] text-body transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                className={`inline-flex items-center gap-1 rounded-full border border-line bg-bg/85 px-2 py-0.5 text-[0.625rem] text-body transition-all duration-500 ${SPRING} ${
                   phase === "intro" ? "translate-y-0 opacity-100" : "translate-y-1.5 opacity-0"
                 }`}
               >
@@ -701,7 +738,7 @@ export function AssistantWidget() {
             ))}
           </span>
 
-          {/* Compact Bottom Ask Me Text Action */}
+          {/* CTA */}
           <div className="relative flex justify-end pt-0.5">
             <button
               type="button"
@@ -709,40 +746,34 @@ export function AssistantWidget() {
               className="group inline-flex items-center gap-1 text-[0.6875rem] font-medium text-accent transition-colors hover:text-ink"
             >
               <span>Ask me</span>
-              <span aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5">
-                →
-              </span>
+              <span aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
             </button>
           </div>
         </div>
       )}
 
-      {/* Hover-Only `Gajendra AI Assistant` Pill beside the Minimized 3D Avatar Orb */}
+      {/* ── Hover pill (minimized state) ── */}
       <button
         type="button"
         onClick={openChat}
         onMouseEnter={() => setAvatarHovered(true)}
         onMouseLeave={() => setAvatarHovered(false)}
         aria-label={`Open ${FIRST_NAME} AI Assistant`}
-        className={`group fixed right-[5.25rem] bottom-[4.1rem] z-50 flex items-center gap-2.5 overflow-hidden rounded-full border border-line-strong/90 bg-raised/94 px-3.5 py-2 text-left shadow-[0_14px_40px_-10px_var(--shadow)] backdrop-blur-xl transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-accent sm:right-[6.25rem] sm:bottom-[4.85rem] xl:right-[calc(max(2rem,calc((100vw-70rem)/4-1.75rem))+4.25rem)] ${
+        className={`group fixed right-[5.25rem] bottom-[3.65rem] z-50 flex items-center gap-2.5 overflow-hidden rounded-full border border-line-strong/90 bg-raised/94 px-3.5 py-2 text-left shadow-[0_14px_40px_-10px_var(--shadow)] backdrop-blur-xl transition-all duration-300 ${SPRING} hover:border-accent sm:right-[6.25rem] sm:bottom-[4.15rem] xl:right-[calc(max(2rem,calc((100vw-70rem)/4-1.75rem))+4.25rem)] ${
           isMinimized && avatarHovered
             ? "translate-x-0 scale-100 opacity-100 blur-0"
             : "pointer-events-none translate-x-3 scale-95 opacity-0 blur-[3px]"
         }`}
       >
+        {/* Top shimmer line */}
         <span
           aria-hidden
           className="pointer-events-none absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-accent/70 to-transparent"
         />
-        <span className="relative flex size-2 shrink-0" aria-hidden>
-          <span className="absolute inset-0 animate-ping rounded-full bg-ok opacity-65" />
-          <span className="relative size-2 rounded-full bg-ok" />
-        </span>
+        <OnlineDot size={2} />
         <span className="min-w-0">
           <span className="flex items-center gap-1.5 text-xs font-medium whitespace-nowrap text-ink">
-            <span className="bg-gradient-to-r from-ink via-accent to-violet bg-clip-text text-transparent">
-              {FIRST_NAME} AI Assistant
-            </span>
+            <GradientName />
             <kbd className="hidden rounded border border-line-strong bg-bg px-1.5 py-0.5 font-sans text-[0.5625rem] text-muted sm:inline-block">
               ⌘K
             </kbd>
@@ -753,18 +784,18 @@ export function AssistantWidget() {
         </span>
       </button>
 
-      {/* Right-Side Chat Drawer */}
+      {/* ── Chat drawer ── */}
       {showChatShell && (
         <aside
           ref={drawerRef}
           aria-label={`${FIRST_NAME} AI Assistant Chat`}
-          className={`fixed inset-x-4 bottom-[8.25rem] z-50 flex h-[min(31rem,calc(100dvh-13.75rem))] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-line-strong/90 bg-raised/95 shadow-[0_28px_90px_-18px_var(--shadow)] backdrop-blur-xl transition-all duration-350 ease-[cubic-bezier(0.16,1,0.3,1)] sm:inset-x-auto sm:right-8 sm:bottom-[9rem] sm:h-[min(32rem,calc(100dvh-15rem))] sm:w-[26rem] ${
+          className={`fixed inset-x-4 bottom-[7.75rem] z-50 flex h-[min(31rem,calc(100dvh-13.25rem))] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-line-strong/90 bg-raised/95 shadow-[0_28px_90px_-18px_var(--shadow)] backdrop-blur-xl transition-all duration-350 ease-[cubic-bezier(0.16,1,0.3,1)] sm:inset-x-auto sm:right-8 sm:bottom-[8.25rem] sm:h-[min(32rem,calc(100dvh-14rem))] sm:w-[26rem] ${
             isChatVisible
               ? "translate-y-0 scale-100 opacity-100 blur-0"
               : "pointer-events-none translate-y-4 scale-[0.96] opacity-0 blur-[6px]"
           }`}
         >
-          {/* Compact header with subtle dark-mode-safe AI glow */}
+          {/* Header */}
           <header className="relative flex items-center justify-between gap-2 overflow-hidden border-b border-line bg-gradient-to-b from-tint/35 via-bg/85 to-bg/80 px-3.5 py-2">
             <span
               aria-hidden
@@ -776,10 +807,7 @@ export function AssistantWidget() {
             />
             <div className="relative min-w-0">
               <div className="flex items-center gap-2">
-                <span className="relative flex size-2 shrink-0" aria-hidden>
-                  <span className="absolute inset-0 animate-ping rounded-full bg-ok opacity-60" />
-                  <span className="relative size-2 rounded-full bg-ok" />
-                </span>
+                <OnlineDot size={2} />
                 <h2 className="truncate bg-gradient-to-r from-ink via-accent to-violet bg-clip-text text-[0.8125rem] font-medium tracking-tight text-transparent">
                   {FIRST_NAME} AI Assistant
                 </h2>
@@ -793,32 +821,17 @@ export function AssistantWidget() {
 
             <div className="relative flex shrink-0 items-center gap-1">
               {hasUserMessages && (
-                <button
-                  type="button"
-                  onClick={() => setShowTopicMenu((open) => !open)}
-                  aria-expanded={showTopicMenu}
+                <HeaderBtn
+                  onClick={() => setShowTopicMenu((o) => !o)}
                   title="Browse topics"
-                  className={`rounded-md border px-2 py-0.5 text-[0.6875rem] transition-colors ${
-                    showTopicMenu
-                      ? "border-accent/60 bg-tint text-ink"
-                      : "border-transparent text-muted hover:border-line hover:text-ink"
-                  }`}
+                  active={showTopicMenu}
                 >
                   Menu
-                </button>
+                </HeaderBtn>
               )}
-              <button
-                type="button"
-                onClick={replayIntro}
-                title="Replay intro"
-                aria-label="Replay intro"
-                className="rounded-md border border-transparent px-2 py-0.5 text-[0.6875rem] text-muted transition-colors hover:border-line hover:text-ink"
-              >
-                Intro
-              </button>
+              <HeaderBtn onClick={replayIntro} title="Replay intro">Intro</HeaderBtn>
               {hasUserMessages && (
-                <button
-                  type="button"
+                <HeaderBtn
                   onClick={() => {
                     setStreamingMsg(null);
                     setFollowUps([]);
@@ -826,11 +839,9 @@ export function AssistantWidget() {
                     setMessages([{ id: "welcome", role: "assistant", content: buildInitialGreeting() }]);
                   }}
                   title="Clear conversation"
-                  aria-label="Clear conversation"
-                  className="rounded-md border border-transparent px-2 py-0.5 text-[0.6875rem] text-muted transition-colors hover:border-line hover:text-ink"
                 >
                   Clear
-                </button>
+                </HeaderBtn>
               )}
               <button
                 type="button"
@@ -844,30 +855,31 @@ export function AssistantWidget() {
             </div>
           </header>
 
-          {/* Messages */}
+          {/* Messages list */}
           <div
             data-lenis-prevent
             className="assistant-scroll flex-1 space-y-3 overflow-y-auto px-4 py-3.5 text-sm"
           >
             {messages.map((msg) => {
               const displayText =
-                streamingMsg && streamingMsg.id === msg.id
+                streamingMsg?.id === msg.id
                   ? streamingMsg.fullText.slice(0, streamingMsg.shownChars)
                   : msg.content;
               const isStreamingThis = streamingMsg?.id === msg.id;
+              const isUser = msg.role === "user";
 
               return (
-                <div key={msg.id} className={`anim-in flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div key={msg.id} className={`anim-in flex ${isUser ? "justify-end" : "justify-start"}`}>
                   <div
                     className={`max-w-[86%] rounded-2xl px-3.5 py-2.5 text-[0.84375rem] leading-relaxed ${
-                      msg.role === "user"
+                      isUser
                         ? "rounded-br-sm bg-gradient-to-br from-ink to-ink/85 text-bg"
                         : msg.isError
                           ? "rounded-bl-sm border border-accent/40 bg-tint text-ink"
                           : "rounded-bl-sm border border-line bg-bg text-body"
                     }`}
                   >
-                    {msg.role === "user" ? (
+                    {isUser ? (
                       <p className="whitespace-pre-wrap break-words">{displayText}</p>
                     ) : (
                       <div>
@@ -893,12 +905,11 @@ export function AssistantWidget() {
               );
             })}
 
+            {/* Loading indicator */}
             {isLoading && (
               <div className="flex justify-start">
                 <div className="inline-flex items-center gap-2 rounded-2xl rounded-bl-sm border border-line bg-bg px-3.5 py-2 text-xs text-muted">
-                  <span className="font-mono text-[0.6875rem] tabular-nums text-accent">
-                    {thinkingSeconds}s
-                  </span>
+                  <span className="font-mono text-[0.6875rem] tabular-nums text-accent">{thinkingSeconds}s</span>
                   <span
                     key={thinkingIndex}
                     className="anim-in bg-gradient-to-r from-ink via-accent to-violet bg-clip-text font-medium text-transparent"
@@ -914,6 +925,7 @@ export function AssistantWidget() {
               </div>
             )}
 
+            {/* Follow-up chips */}
             {hasUserMessages && !isLoading && !isSpeakingNow && followUps.length > 0 && !showTopicMenu && (
               <div className="anim-in flex flex-wrap gap-1.5 pt-0.5">
                 {followUps.map((chip) => (
@@ -930,6 +942,7 @@ export function AssistantWidget() {
               </div>
             )}
 
+            {/* Starter topic cards */}
             {((!hasUserMessages && !isLoading) || showTopicMenu) && (
               <div ref={topicMenuRef} className="anim-in space-y-2.5 pt-1">
                 {!hasUserMessages && (
@@ -941,7 +954,6 @@ export function AssistantWidget() {
                     ))}
                   </div>
                 )}
-
                 <p className="label-sm">Popular topics</p>
                 <div className="grid grid-cols-2 gap-2">
                   {STARTER_CARDS.map((card) => (
@@ -970,7 +982,7 @@ export function AssistantWidget() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Rate-Limit Cooldown Banner */}
+          {/* Rate-limit cooldown banner */}
           {cooldownSeconds > 0 && (
             <div className="border-t border-accent/25 bg-tint/80 px-3.5 py-1.5 text-[0.6875rem] text-ink">
               Too many requests — ready in <span className="font-medium text-accent">{cooldownSeconds}s</span> ·{" "}
@@ -982,10 +994,7 @@ export function AssistantWidget() {
 
           {/* Composer */}
           <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              void sendMessage(input);
-            }}
+            onSubmit={(e) => { e.preventDefault(); void sendMessage(input); }}
             className="border-t border-line bg-bg/75 p-3"
           >
             <div className="flex items-end gap-2 rounded-xl border border-line-strong bg-raised px-3 py-2 focus-within:border-accent">
@@ -1028,39 +1037,54 @@ export function AssistantWidget() {
         </aside>
       )}
 
-      {/* Single Persistent Three.js 3D Avatar */}
+      {/* ── 3D Avatar Button (always mounted, CSS-scaled) ── */}
       <button
         ref={avatarButtonRef}
         type="button"
-        onClick={() => {
-          if (phase === "open" || phase === "opening") closeChat();
-          else openChat();
-        }}
+        onClick={() => (phase === "open" || phase === "opening" ? closeChat() : openChat())}
         onMouseEnter={() => setAvatarHovered(true)}
         onMouseLeave={() => setAvatarHovered(false)}
         aria-label={phase === "open" ? `Minimize ${FIRST_NAME} AI Assistant` : `Open ${FIRST_NAME} AI Assistant`}
-        className={`fixed z-50 cursor-pointer rounded-full transition-all duration-[800ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline-2 focus-visible:outline-accent ${avatarStageClass} ${
-          isIntroArea
-            ? "bg-transparent"
-            : "border border-line-strong/90 bg-raised/92 shadow-[0_14px_40px_-10px_var(--shadow)] backdrop-blur-xl hover:scale-105 hover:border-accent"
-        }`}
+        className={`fixed bottom-14 z-50 size-36 origin-bottom-right cursor-pointer rounded-full bg-transparent transition-[transform,opacity] duration-[850ms] ${SPRING} will-change-transform focus-visible:outline-2 focus-visible:outline-accent sm:bottom-16 sm:size-44 ${AVATAR_RIGHT} ${avatarStageClass}`}
       >
-        <span
-          aria-hidden
-          className={`pointer-events-none absolute inset-x-3 -bottom-2 h-6 rounded-full blur-xl transition-opacity duration-700 ${
-            isIntroArea ? "opacity-75" : "opacity-0"
+        {/* Inner wrapper handles hover scale independently from phase transition */}
+        <div
+          className={`relative h-full w-full transition-transform duration-300 ${SPRING} ${
+            avatarHovered && !isIntroArea ? "scale-110" : "scale-100"
           }`}
-          style={{
-            background: "radial-gradient(closest-side, var(--accent), transparent)",
-          }}
-        />
-        <AvatarCanvas
-          mood={activeMood}
-          variant={isIntroArea ? "intro" : "orb"}
-          hovered={avatarHovered}
-          transitionKey={transitionKey}
-          className="h-full w-full"
-        />
+        >
+          {/* Gradient orb backdrop (docked state) */}
+          <span
+            aria-hidden
+            className={`pointer-events-none absolute inset-0 rounded-full backdrop-blur-md transition-opacity duration-[850ms] ${SPRING} ${
+              isIntroArea ? "opacity-0" : "opacity-100"
+            }`}
+            style={{
+              background:
+                "radial-gradient(circle at 28% 24%, color-mix(in oklab, var(--raised) 92%, transparent), color-mix(in oklab, var(--tint) 82%, transparent) 55%, color-mix(in oklab, var(--violet) 22%, var(--raised)) 100%)",
+              boxShadow:
+                "inset 0 2px 4px color-mix(in oklab, white 35%, transparent), 0 0 0 3px color-mix(in oklab, var(--accent) 30%, var(--line-strong)), 0 28px 64px -18px var(--shadow)",
+            }}
+          />
+          {/* Floor glow (intro / expanded state) */}
+          <span
+            aria-hidden
+            className={`pointer-events-none absolute inset-x-3 -bottom-2 h-6 rounded-full blur-xl transition-opacity duration-[850ms] ${SPRING} ${
+              isIntroArea ? "opacity-75" : "opacity-0"
+            }`}
+            style={{
+              background:
+                "radial-gradient(closest-side, color-mix(in oklab, var(--accent) 75%, transparent), color-mix(in oklab, var(--violet) 45%, transparent) 60%, transparent 100%)",
+            }}
+          />
+          <AvatarCanvas
+            mood={activeMood}
+            variant={isIntroArea ? "intro" : "orb"}
+            hovered={avatarHovered}
+            transitionKey={transitionKey}
+            className="relative h-full w-full"
+          />
+        </div>
       </button>
     </>
   );
